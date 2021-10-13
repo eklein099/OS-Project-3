@@ -13,6 +13,7 @@ struct zipped_char *zipped_chars_g;
 int *zipped_chars_count_g;
 int *char_frequency_g;
 int size;
+pthread_mutex_t lock;
 
 static void *thread_zip(void *nv){
 
@@ -20,7 +21,7 @@ static void *thread_zip(void *nv){
 	int start = size*n;
 	int end = size*n + size;
 
-	struct zipped_char *local_zipped = malloc(sizeof(struct zipped_char)*(input_char_size_g)/n_threads_g);
+	struct zipped_char *local_zipped = malloc(sizeof(struct zipped_char)*(input_chars_size_g)/n_threads_g);
 	struct zipped_char *zip = local_zipped;
         int count = 0;
 
@@ -38,18 +39,20 @@ static void *thread_zip(void *nv){
                         zip->occurence++;
                 }
 		//lock
-                char_frequency_g[input_chars[i]-97]++;
+                char_frequency_g[input_chars_g[i]-97]++;
 		//unlock
         }
 	//lock
-        *zipped_chars_count = count;
+        *zipped_chars_count_g = count;
 	//unlock
-        
+ 	
+ 	//barier	
 	//copy everything over
 
 
 	free(local_zipped);
-
+	
+	return NULL;
 }
 
 static void serial(int n_threads, char *input_chars, int input_chars_size,
@@ -101,6 +104,8 @@ void pzip(int n_threads, char *input_chars, int input_chars_size,
 	  struct zipped_char *zipped_chars, int *zipped_chars_count,
 	  int *char_frequency)
 {
+	pthread_mutex_init(&lock,NULL); //do some error handling here
+
 	n_threads_g = n_threads;
 	input_chars_g = input_chars;
 	input_chars_size_g = input_chars_size;
@@ -114,5 +119,5 @@ void pzip(int n_threads, char *input_chars, int input_chars_size,
 
 	serial(n_threads_g, input_chars_g, input_chars_size_g, zipped_chars_g, zipped_chars_count_g, char_frequency_g);
 
-	
+	pthread_mutex_destroy(&lock);
 }
