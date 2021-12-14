@@ -17,7 +17,9 @@ pthread_mutex_t lock;
 
 static void *thread_zip(void *nv){
 
-	int n = (int)(nv);
+	printf("Thread running");
+
+	/*int n = (int)(nv);
 	int start = size*n;
 	int end = size*n + size;
 
@@ -51,11 +53,11 @@ static void *thread_zip(void *nv){
 
 
 	free(local_zipped);
-	
+	*/
 	return NULL;
 }
 
-static void serial(int n_threads, char *input_chars, int input_chars_size,
+/*static void serial(int n_threads, char *input_chars, int input_chars_size,
           struct zipped_char *zipped_chars, int *zipped_chars_count,
           int *char_frequency)
 {
@@ -80,7 +82,7 @@ static void serial(int n_threads, char *input_chars, int input_chars_size,
         }
         *zipped_chars_count = count;
         //printf("%d",*zipped_chars_count);
-}
+}*/
 
 
 
@@ -104,6 +106,7 @@ void pzip(int n_threads, char *input_chars, int input_chars_size,
 	  struct zipped_char *zipped_chars, int *zipped_chars_count,
 	  int *char_frequency)
 {
+
 	pthread_mutex_init(&lock,NULL); //do some error handling here
 
 	n_threads_g = n_threads;
@@ -114,10 +117,25 @@ void pzip(int n_threads, char *input_chars, int input_chars_size,
 	char_frequency_g = char_frequency;
 	size = input_chars_size_g/n_threads_g;
 
-	printf("input_chars_size_g: %d\n",input_chars_size_g);
-	printf("n_threads_g: %d\n",n_threads_g);
+	printf("gothere 1\n");
 
-	serial(n_threads_g, input_chars_g, input_chars_size_g, zipped_chars_g, zipped_chars_count_g, char_frequency_g);
+	//serial(n_threads_g, input_chars_g, input_chars_size_g, zipped_chars_g, zipped_chars_count_g, char_frequency_g);
+
+	pthread_t p[n_threads];
+
+	printf("gothere 2\n");
+
+	for(int i = 0; i < n_threads; i++){
+		pthread_create(&p[i],NULL,thread_zip,((void *)&i));
+		printf("%p\n",&p[i]);
+	}
+	
+	printf("gothere 3\n");
+
+	//wait for all threads to finish
+	for(int i = 0; i < n_threads; i++){
+		pthread_join(p[i],NULL);
+	}
 
 	pthread_mutex_destroy(&lock);
 }
